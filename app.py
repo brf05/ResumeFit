@@ -5,16 +5,15 @@ import requests
 import fitz  # PyMuPDF for PDFs
 import docx  # python-docx for Word docs
 from feedback import generate_feedback
-from markupsafe import Markup
 import logging
-
+import markdown
 
 # === Load environment variables ===
 load_dotenv()
 app = Flask(__name__)
 
 HF_API_TOKEN = os.getenv("HF_API_TOKEN")
-HF_API_URL="https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2"
+HF_API_URL = "https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2"
 HEADERS = {"Authorization": f"Bearer {HF_API_TOKEN}"}
 
 if not HF_API_TOKEN:
@@ -61,18 +60,17 @@ def get_similarity_score(sentence1, sentence2):
         logging.error(f"Unexpected API response: {result}")
         raise ValueError("Unexpected API response format.")
 
+# === Jinja Filter for Markdown Conversion ===
+@app.template_filter('markdownify')
+def markdownify(text):
+    if text:
+        return markdown.markdown(text)
+    return ''
 
 # === Routes ===
 @app.route('/')
 def index():
     return render_template('index.html')
-
-@app.template_filter('nl2br')
-def nl2br(s):
-    if s:
-        return Markup(s.replace('\n', '<br>\n'))
-    else:
-        return ''
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
@@ -107,7 +105,6 @@ def analyze():
                            resume_preview=resume_text[:300],
                            job_preview=job_desc[:300],
                            feedback=feedback_text)
-
 
 if __name__ == '__main__':
     app.run(debug=True)
