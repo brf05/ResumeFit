@@ -1,6 +1,6 @@
 # ResumeFit
 
-ResumeFit is a Python-based application designed to analyze resumes and provide constructive feedback to improve them. It uses AI-powered tools to compare resumes against job descriptions and generate suggestions for any improvement.
+ResumeFit is a Python-based application designed to analyse resumes and provide constructive feedback to improve them. It uses AI-powered tools to compare resumes against job descriptions and generate suggestions for any improvement.
 
 ## Features
 
