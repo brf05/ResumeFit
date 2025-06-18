@@ -21,4 +21,12 @@ ResumeFit is a Python-based application designed to analyze resumes and provide 
 2. **Processing**: The application uses AI models to analyze the resume.
 3. **Output**: Provides a match score and actionable feedback.
 
+### Env File Structure
+```bash
+HF_API_TOKEN=<your_huggingface_api_token>
+GROQ_API_KEY=<your_groq_api_key>
+GROQ_MODEL=llama3-8b-8192
+```
+
+
 

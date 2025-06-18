@@ -6,6 +6,7 @@ import fitz  # PyMuPDF for PDFs
 import docx  # python-docx for Word docs
 from feedback import generate_feedback
 from markupsafe import Markup
+import logging
 
 
 # === Load environment variables ===
@@ -16,6 +17,13 @@ HF_API_TOKEN = os.getenv("HF_API_TOKEN")
 HF_API_URL="https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2"
 HEADERS = {"Authorization": f"Bearer {HF_API_TOKEN}"}
 
+if not HF_API_TOKEN:
+    raise EnvironmentError("HF_API_TOKEN is not set in the environment.")
+
+logging.basicConfig(level=logging.ERROR)
+
+# Limit the maximum content length to 2 MB
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2 MB
 
 # === Text extraction from uploaded file ===
 def extract_text_from_file(file):
@@ -29,7 +37,6 @@ def extract_text_from_file(file):
     elif filename.endswith('.txt'):
         return file.read().decode('utf-8')
     return ""
-
 
 # === Use sentence-transformers API to compute similarity ===
 def get_similarity_score(sentence1, sentence2):
@@ -49,8 +56,9 @@ def get_similarity_score(sentence1, sentence2):
 
     result = response.json()
     if isinstance(result, list) and len(result) == 1:
-        return round(result[0] * 100, 2)  # Convert to percentage
+        return round(result[0] * 100, 2)
     else:
+        logging.error(f"Unexpected API response: {result}")
         raise ValueError("Unexpected API response format.")
 
 
@@ -76,6 +84,8 @@ def analyze():
     if not resume_text and 'resume_file' in request.files:
         file = request.files['resume_file']
         if file and file.filename:
+            if not file.filename.lower().endswith(('.pdf', '.docx', '.txt')):
+                return "Error: Unsupported file type.", 400
             resume_text = extract_text_from_file(file)
 
     if not resume_text or not job_desc:
@@ -84,7 +94,8 @@ def analyze():
     try:
         score = get_similarity_score(job_desc, resume_text)
     except Exception as e:
-        return f"Error occurred while calculating similarity: {str(e)}", 500
+        logging.error(f"Similarity calculation error: {str(e)}")
+        return "An error occurred while processing your request. Please try again later.", 500
 
     try:
         feedback_text = generate_feedback(resume_text, job_desc)
